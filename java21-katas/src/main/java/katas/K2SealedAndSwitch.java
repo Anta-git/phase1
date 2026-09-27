@@ -6,6 +6,7 @@ package katas;
  */
 public class K2SealedAndSwitch {
 
+    //Permits is unnecessary here as all uses are contained to this file. If this changes, permits must be present.
     public sealed interface StreamEvent permits Follow, Subscription, Raid {}
 
     public record Follow(String user) implements StreamEvent {}
@@ -25,6 +26,12 @@ public class K2SealedAndSwitch {
      * Do not add a default branch.
      */
     public static String alertText(StreamEvent event) {
-        throw new UnsupportedOperationException("TODO");
+        return switch (event) {
+            case Follow f -> String.format(f.user + " followed!");
+            case Subscription s when s.months == 1 -> String.format(s.user + " subscribed at tier " + s.tier + "!");
+            case Subscription s ->
+                    String.format(s.user + " resubscribed at tier " + s.tier + " for " + s.months + " months!");
+            case Raid r -> String.format(r.fromChannel + " is raiding with " + r.viewers + " viewers!");
+        };
     }
 }
