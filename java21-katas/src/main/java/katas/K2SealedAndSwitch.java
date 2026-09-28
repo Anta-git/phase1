@@ -27,11 +27,10 @@ public class K2SealedAndSwitch {
      */
     public static String alertText(StreamEvent event) {
         return switch (event) {
-            case Follow f -> String.format(f.user + " followed!");
-            case Subscription s when s.months == 1 -> String.format(s.user + " subscribed at tier " + s.tier + "!");
-            case Subscription s ->
-                    String.format(s.user + " resubscribed at tier " + s.tier + " for " + s.months + " months!");
-            case Raid r -> String.format(r.fromChannel + " is raiding with " + r.viewers + " viewers!");
+            case Follow f -> "%s followed!".formatted(f.user);
+            case Subscription s when s.months == 1 -> "%s subscribed at tier %s!".formatted(s.user, s.tier);
+            case Subscription s -> "%s resubscribed at tier %s for %s months!".formatted(s.user, s.tier, s.months);
+            case Raid r -> "%s is raiding with %s viewers!".formatted(r.fromChannel, r.viewers);
         };
     }
 }
