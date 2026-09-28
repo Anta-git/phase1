@@ -1,7 +1,7 @@
 package katas;
 
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * Kata 3: Modern streams and sequenced collections (Java 16-21).
@@ -12,16 +12,16 @@ public class K3Streams {
 
     /** TODO: Titles of clips with more than minViews views, highest views first. Use Stream.toList(). */
     public static List<String> popularTitles(List<Clip> clips, int minViews) {
-        throw new UnsupportedOperationException("TODO");
+        return clips.stream().filter(x -> x.views >= minViews).sorted(Comparator.comparingInt(((Clip x) -> x.views)).reversed()).map(r -> r.title).toList();
     }
 
     /** TODO: Total views per channel (Collectors.groupingBy + summingInt). */
     public static Map<String, Integer> viewsByChannel(List<Clip> clips) {
-        throw new UnsupportedOperationException("TODO");
+        return clips.stream().collect(Collectors.groupingBy(Clip::channel, Collectors.summingInt(Clip::views)));
     }
 
     /** TODO: Return "<first title> ... <last title>" using List.getFirst()/getLast() (Java 21 SequencedCollection). */
     public static String firstAndLast(List<Clip> clips) {
-        throw new UnsupportedOperationException("TODO");
+        return (clips.getFirst().title + " ... " + clips.getLast().title);
     }
 }
