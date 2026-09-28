@@ -28,7 +28,8 @@ public class K2SealedAndSwitch {
     public static String alertText(StreamEvent event) {
         return switch (event) {
             case Follow f -> "%s followed!".formatted(f.user);
-            case Subscription s when s.months == 1 -> "%s subscribed at tier %s!".formatted(s.user, s.tier);
+            case Subscription(var user, var tier, var months) when months == 1 ->
+                    "%s subscribed at tier %s!".formatted(user, tier);
             case Subscription s -> "%s resubscribed at tier %s for %s months!".formatted(s.user, s.tier, s.months);
             case Raid r -> "%s is raiding with %s viewers!".formatted(r.fromChannel, r.viewers);
         };
