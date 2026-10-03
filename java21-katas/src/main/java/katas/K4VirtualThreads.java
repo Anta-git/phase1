@@ -1,8 +1,9 @@
 package katas;
 
 import java.time.Duration;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.ExecutionException;
+import java.util.concurrent.*;
 
 /**
  * Kata 4: Virtual threads (Java 21).
@@ -71,7 +72,7 @@ public class K4VirtualThreads {
      * (The test calls {@code join()} on the returned thread to wait for it.)
      */
     public static Thread startVirtual(Runnable task) {
-        throw new UnsupportedOperationException("TODO");
+        return Thread.ofVirtual().start(task);
     }
 
     /**
@@ -85,7 +86,14 @@ public class K4VirtualThreads {
      * On its own this is slower than calling fetchViewerCount directly; it's practice for Step C.
      */
     public static String fetchOne(String channel) throws InterruptedException, ExecutionException {
-        throw new UnsupportedOperationException("TODO");
+        try (ExecutorService myExecutor = Executors.newVirtualThreadPerTaskExecutor()) {
+            Future<String> future = myExecutor.submit(() -> fetchViewerCount(channel));
+            return future.get();
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        } catch (ExecutionException e) {
+            throw new ExecutionException(e);
+        }
     }
 
     /**
@@ -102,7 +110,20 @@ public class K4VirtualThreads {
      * When is every task guaranteed to be finished?
      */
     public static List<String> fetchAll(List<String> channels) {
-        throw new UnsupportedOperationException("TODO");
+        List<Future<String>> futures = new java.util.ArrayList<>(List.of());
+        List<String> results = new ArrayList<>();
+        try (ExecutorService myExecutor = Executors.newVirtualThreadPerTaskExecutor()) {
+            for (String channel : channels) {
+                futures.add(myExecutor.submit(() -> fetchViewerCount(channel)));
+            }
+        } catch (RuntimeException e) {
+            throw new RuntimeException(e);
+        }
+
+        for (Future<String> future : futures) {
+            results.add(future.resultNow());
+        }
+        return results;
     }
 
     /**
@@ -114,6 +135,19 @@ public class K4VirtualThreads {
      * Before running the test, predict: 50 channels, pool of 5, 200 ms each. How long will it take?
      */
     public static List<String> fetchAllOnPlatformPool(List<String> channels, int poolSize) {
-        throw new UnsupportedOperationException("TODO");
+        List<Future<String>> futures = new java.util.ArrayList<>(List.of());
+        List<String> results = new ArrayList<>();
+        try (ExecutorService myExecutor = Executors.newFixedThreadPool(poolSize)) {
+            for (String channel : channels) {
+                futures.add(myExecutor.submit(() -> fetchViewerCount(channel)));
+            }
+        } catch (RuntimeException e) {
+            throw new RuntimeException(e);
+        }
+
+        for (Future<String> future : futures) {
+            results.add(future.resultNow());
+        }
+        return results;
     }
 }
