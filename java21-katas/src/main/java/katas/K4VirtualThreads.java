@@ -89,10 +89,6 @@ public class K4VirtualThreads {
         try (ExecutorService myExecutor = Executors.newVirtualThreadPerTaskExecutor()) {
             Future<String> future = myExecutor.submit(() -> fetchViewerCount(channel));
             return future.get();
-        } catch (InterruptedException e) {
-            throw new RuntimeException(e);
-        } catch (ExecutionException e) {
-            throw new ExecutionException(e);
         }
     }
 
@@ -110,20 +106,14 @@ public class K4VirtualThreads {
      * When is every task guaranteed to be finished?
      */
     public static List<String> fetchAll(List<String> channels) {
-        List<Future<String>> futures = new java.util.ArrayList<>(List.of());
-        List<String> results = new ArrayList<>();
-        try (ExecutorService myExecutor = Executors.newVirtualThreadPerTaskExecutor()) {
-            for (String channel : channels) {
-                futures.add(myExecutor.submit(() -> fetchViewerCount(channel)));
-            }
-        } catch (RuntimeException e) {
+        try (ExecutorService executor = Executors.newVirtualThreadPerTaskExecutor()) {
+            return fetchAllWith(executor, channels);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
             throw new RuntimeException(e);
+        } catch (ExecutionException e) {
+            throw new RuntimeException(e.getCause());
         }
-
-        for (Future<String> future : futures) {
-            results.add(future.resultNow());
-        }
-        return results;
     }
 
     /**
@@ -135,19 +125,29 @@ public class K4VirtualThreads {
      * Before running the test, predict: 50 channels, pool of 5, 200 ms each. How long will it take?
      */
     public static List<String> fetchAllOnPlatformPool(List<String> channels, int poolSize) {
+        try (ExecutorService executor = Executors.newFixedThreadPool(poolSize)) {
+            return fetchAllWith(executor, channels);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new RuntimeException(e);
+        } catch (ExecutionException e) {
+            throw new RuntimeException(e.getCause());
+        }
+    }
+
+
+    private static List<String> fetchAllWith(ExecutorService executor, List<String> channels) throws ExecutionException, InterruptedException {
         List<Future<String>> futures = new java.util.ArrayList<>(List.of());
         List<String> results = new ArrayList<>();
-        try (ExecutorService myExecutor = Executors.newFixedThreadPool(poolSize)) {
-            for (String channel : channels) {
-                futures.add(myExecutor.submit(() -> fetchViewerCount(channel)));
-            }
-        } catch (RuntimeException e) {
-            throw new RuntimeException(e);
+
+        for (String channel : channels) {
+            futures.add(executor.submit(() -> fetchViewerCount(channel)));
         }
 
         for (Future<String> future : futures) {
-            results.add(future.resultNow());
+            results.add(future.get());
         }
+
         return results;
     }
 }
